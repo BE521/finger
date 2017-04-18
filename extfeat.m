@@ -8,6 +8,8 @@
 
 function out=extfeat(data,winlen,overlap)
 
+% force data to be in row vector
+data=reshape(data,1,length(data));
 % calculate window number
 n=floor((length(data)-overlap)/(winlen-overlap));
 % calculate moving average
