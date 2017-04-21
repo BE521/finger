@@ -18,6 +18,14 @@ predicted_dg=cell(3,1);
 % initialize yy
 yy = zeros(5,147500);
 
+% filter out 60Hz noise from the ECoG datasets
+for n = 1:3
+    bsFilt = designfilt('bandstopfir','FilterOrder',20, ...
+         'CutoffFrequency1',60,'CutoffFrequency2',61, ...
+         'SampleRate',1500);
+    data{1,n} = filtfilt(bsFilt,data{1,n});
+    data{3,n} = filtfilt(bsFilt,data{1,n});
+end
 % initialize correlation cell
 c=cell(3,1);
 for p=1:3
