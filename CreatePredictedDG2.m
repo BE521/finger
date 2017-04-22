@@ -24,7 +24,7 @@ for n = 1:3
          'CutoffFrequency1',60,'CutoffFrequency2',61, ...
          'SampleRate',1500);
     data{1,n} = filtfilt(bsFilt,data{1,n});
-    data{3,n} = filtfilt(bsFilt,data{1,n});
+    data{3,n} = filtfilt(bsFilt,data{3,n});
 end
 % initialize correlation cell
 c=cell(3,1);
