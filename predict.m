@@ -33,15 +33,16 @@ end
 for Patient=1:3
    %% Downsample the Label Data
     % downsample to 25Hz, with is consistent with the sample rate of fingers
-    DownsampledLabels=data{2,Patient}(220:40:length(data{2,Patient}),:);
+    DownsampledLabels=data{2,Patient}(376:40:length(data{2,Patient}),:);
     for Finger=1:5
        %% Create R Matrix for Finger
         % initialize feature cell array, each cell contains an electrode
         Features=cell(info{1,Patient}.ch,1);
 
-        % extract 6 features for all channels
+        % extract 6 features for all channels with discrete wavelet
+        % transform
         for i=selection{Finger,Patient}
-            Features{i}=extfeat(data{1,Patient}(:,i),100,60);
+            Features{i}=newfeats(data{1,Patient}(:,i),40);
         end
 
         % store the non-empty features in a feature cell array, a
@@ -57,7 +58,7 @@ for Patient=1:3
 
         % extract 6 features for all channels
         for i=selection{Finger,Patient}
-            feats2{i}=extfeat(data{3,Patient}(:,i),100,60);
+            feats2{i}=extfeat(data{3,Patient}(:,i),40);
         end
 
         % store the non-empty features2 in a feature cell array, b
@@ -69,16 +70,21 @@ for Patient=1:3
        %% Predict the Values for predicted_dg
         %For each finger use the optimal lasso lambda to predict the column
 
-        [B,FitInfo]=lasso(R,DownsampledLabels(:,Finger),'CV',10);
-        BestLambdas(Finger,Patient)=FitInfo.LambdaMinMSE(1);
-        predicted_dg{Patient}(:,Finger)=TestR*B(:,FitInfo.IndexMinMSE(1));
+        %for selecting lambda
+        %[B,FitInfo]=lasso(R,DownsampledLabels(:,Finger),'CV',2);
+        %BestLambdas(Finger,Patient)=FitInfo.LambdaMinMSE(1);
+        %predicted_dg{Patient}(:,Finger)=TestR*B(:,FitInfo.IndexMinMSE(1));
+        
+        B=lasso(R,DownsampledLabels(:,Finger),'Lambda',BestLambdas(Finger,Patient));
+        predicted_dg{Patient}(:,Finger)=TestR*B;        
+        
 
     end
     % initialize yy
     yy = zeros(5,147500);
     %Interpolate Predicted Labels
-    yy(:,220:180+length(predicted_dg{Patient})*40)=...
-        spline(220:40:147500,predicted_dg{Patient}',220:180+length(predicted_dg{Patient})*40);
+    yy(:,376:336+length(predicted_dg{Patient})*40)=...
+        spline(376:40:147500,predicted_dg{Patient}',376:336+length(predicted_dg{Patient})*40);
     
     %Optional Plot the data
     % plot(200:50:length(data{3,p}),predicted_dg{p,1}(:,1),'o',200:1:147500,yy(1,:));
@@ -87,3 +93,5 @@ for Patient=1:3
     predicted_dg{Patient,1} = yy';
     
 end
+save('result.mat','predicted_dg')
+save('BestLambdas.mat','BestLambdas')
