@@ -6,6 +6,7 @@
 load('final.mat')
 %load('BestLambdas.mat')
 BestLambdas=zeros(5,3);
+Bs=cell(5,3);
 
 %% Identify the Bad Channels
 % bad channels for each subject:
@@ -39,9 +40,10 @@ for Patient=1:3
         % initialize feature cell array, each cell contains an electrode
         Features=cell(info{1,Patient}.ch,1);
 
-        % extract 6 features for all channels with discrete wavelet
+        % extract features for all channels with discrete wavelet
         % transform
         for i=selection{Finger,Patient}
+            disp(['extracting p' int2str(Patient) 'ch' int2str(i)])
             Features{i}=newfeats(data{1,Patient}(:,i),40);
         end
 
@@ -49,7 +51,7 @@ for Patient=1:3
         a = Features(~cellfun('isempty', Features));
 
         % create R2 matrix with 4 windows before and 6 features
-        R=CreateR(a,4,6);
+        R=CreateR(a,4,34);
 
        %% Create ECoG Testing R Matrix
         %Create an R Matrix for the Testing ECog Data
@@ -58,25 +60,28 @@ for Patient=1:3
 
         % extract 6 features for all channels
         for i=selection{Finger,Patient}
-            feats2{i}=extfeat(data{3,Patient}(:,i),40);
+            disp(['extracting p' int2str(Patient) 'ch' int2str(i)])
+            feats2{i}=newfeats(data{3,Patient}(:,i),40);
         end
 
         % store the non-empty features2 in a feature cell array, b
         b = feats2(~cellfun('isempty', feats2));
 
         % create Test R matrix with 4 windows before and 6 features
-        TestR=CreateR(b,4,6);
+        TestR=CreateR(b,4,34);
 
        %% Predict the Values for predicted_dg
         %For each finger use the optimal lasso lambda to predict the column
 
-        %for selecting lambda
-        %[B,FitInfo]=lasso(R,DownsampledLabels(:,Finger),'CV',2);
-        %BestLambdas(Finger,Patient)=FitInfo.LambdaMinMSE(1);
-        %predicted_dg{Patient}(:,Finger)=TestR*B(:,FitInfo.IndexMinMSE(1));
+       %for selecting lambda
+       disp(['select feat p' int2str(Patient) 'f' int2str(Finger)])
+        [B,FitInfo]=lasso(R,DownsampledLabels(:,Finger),'CV',2);
+        BestLambdas(Finger,Patient)=FitInfo.LambdaMinMSE(1);
+        Bs{Finger,Patient}=B(:,FitInfo.IndexMinMSE(1));
+        predicted_dg{Patient}(:,Finger)=TestR*B(:,FitInfo.IndexMinMSE(1));
         
-        B=lasso(R,DownsampledLabels(:,Finger),'Lambda',BestLambdas(Finger,Patient));
-        predicted_dg{Patient}(:,Finger)=TestR*B;        
+%         B=lasso(R,DownsampledLabels(:,Finger),'Lambda',BestLambdas(Finger,Patient));
+%         predicted_dg{Patient}(:,Finger)=TestR*B;        
         
 
     end
@@ -95,3 +100,4 @@ for Patient=1:3
 end
 save('result.mat','predicted_dg')
 save('BestLambdas.mat','BestLambdas')
+save('param.mat','Bs')
