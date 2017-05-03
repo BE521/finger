@@ -1,7 +1,7 @@
 %%
 % data - a vector of original data
 % winLen - length of each window
-% winDisp - overlapped length of each window
+% overlap - overlapped length of each window
 % type - 1.left align / 2. middle align / 3. right align
 % return value - an matrix of windows, 
 function out=movwin(data, winlen, overlap, type)
