@@ -1,2 +1,4 @@
 # finger
-final project
+BE 521 final project
+
+Main script file: predict.m
